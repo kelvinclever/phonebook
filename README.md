@@ -3,7 +3,7 @@
 ## USAGE
 
 ```sh
-  git clone https://github.com/SamuelOkoth/PHONEBOOK-API/
+  git clone https://github.com/kelvinclever/phonebook.git
 ```
 
 ```sh
