@@ -1,6 +1,10 @@
 import { dbConfig } from "../config/config.js";
-import sql from "mssql";
+import jwt  from "jsonwebtoken";
 import bcrypt from 'bcrypt'
+import sql from "mssql";
+import dotenv from 'dotenv'
+dotenv.config()
+
 
 export const signup = async (req, res) => {
   try {
@@ -42,30 +46,30 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
-
     const connection = await sql.connect(dbConfig);
-
-    const query = "SELECT * FROM users WHERE username = @username";
-    const result = await connection
+    const {username, password} = req.body
+    const query1 = "SELECT * FROM users WHERE username = @username"
+    const results = await connection
       .request()
       .input("username", sql.VarChar, username)
-      .query(query);
-
-    if (result.recordset.length === 0) {
-      return res.status(401).json({ message: "Invalid username." });
+      .query(query1);
+    if (!results.recordset[0]) {
+      return res.json({ message: "Account doesnt exist, create one" });
     }
-
-    const user = result.recordset[0];
-    if (user.password !== password) {
-      return res.status(401).json({ message: "Invalid password." });
+    const hashedpassword = results.recordset[0].password
+    const validpassword = bcrypt.compareSync(password,hashedpassword)
+    if(!validpassword){
+        return res.json({message: "Incorrect password"})
     }
-
-    // Successful login
-    return res.json({ message: "Login successful.", user: user });
+    const payload = results.recordset.map(user=> {
+        const {password, ...rest} = user
+        return {...rest}
+    })
+    const {JWT_SECRET} = process.env
+    const token = jwt.sign(payload[0], JWT_SECRET)
+    res.json({message: "Logged in successfully", token})
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  } finally {
-    sql.close();
+    res.json(error.message)
   }
 };
+

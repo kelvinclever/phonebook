@@ -1,22 +1,17 @@
-import jwt from 'jsonwebtoken';
-import {JWT_SECRET} from 'dotenv'
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const authenticateToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "Authentication token missing." });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid token." });
-    }
-
-    // Attach the decoded user object to the request for further use
-    req.user = user;
-
-    // Proceed to the next middleware or route handler
+export const verifyToken = (req, res, next) => {
+  try {
+    const token = req.headers.authorization;
+    const {JWT_SECRET}= process.env;
+    const decoded=jwt.verify(token,JWT_SECRET);
+    req.userData=decoded;
+    
     next();
-  });
+  } catch (error) {
+    res.status(500).json({ message: "please login auth failed" });
+  }
+  
 };

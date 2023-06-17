@@ -6,6 +6,7 @@ dotenv.config()
 
 
 const app = express();
+
 app.use(json())
 app.use("/contacts", contactRouter)
 app.use("/auth",authRouter)
